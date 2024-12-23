@@ -1,0 +1,12 @@
+.vs
+.idea
+obj
+bin
+.DS_Store
+*.DotSettings.user
+*.nupkg
+*.csproj.user
+
+# Ignore anything related to test/coverage report tools & their output files
+*/**/TestResults/*
+*/**/coveragereport/*
