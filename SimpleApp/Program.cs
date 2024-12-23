@@ -8,8 +8,9 @@ using Scalar.AspNetCore;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddConfiguration();
-builder.AddMediaR();
 builder.ConfigureAuth();
+builder.AddMediaR();
+builder.MemoryCache();
 builder.Services.AddOpenApi();
 builder.Services.AddDatabase(builder.Configuration);
 

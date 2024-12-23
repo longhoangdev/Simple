@@ -8,6 +8,7 @@ using Microsoft.Identity.Web;
 using SimpleApp.Persistence.Contexts;
 using SimpleApp.Shared.Constants;
 using SimpleApp.Shared.Extensions;
+using SimpleApp.Shared.Caching;
 
 namespace SimpleApp;
 
@@ -20,6 +21,7 @@ internal static class ProgramExtensions
             config.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
             config.RegisterServicesFromAssemblyContaining<ApplicationAssemblyResolver>();
             
+            config.AddOpenBehavior(typeof(QueryCachingPipelineBehavior<,>));
             config.AddOpenBehavior(typeof(CommandValidationBehavior<,>));
         });
         builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly(), includeInternalTypes: true);
@@ -64,4 +66,18 @@ internal static class ProgramExtensions
             };
         }, options => { builder.Configuration.Bind("AzureAdB2C", options); });
     }
+
+    internal static void MemoryCache(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddMemoryCache();
+        builder.Services.AddSingleton<ICacheService, CacheService>();
+        builder.Services.AddStackExchangeRedisCache(options =>
+        {
+            var redisConnection = builder.Configuration.GetConnectionString("Redis");
+            options.Configuration = redisConnection;
+        });
+        
+        builder.Services.AddSingleton<IRedisCacheService, RedisCacheService>();
+    }
+    
 }

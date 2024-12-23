@@ -19,7 +19,7 @@ internal sealed class GetUserListQueryHandler(ReadOnlyDataContext context) : IQu
             Email = u.Email,
             Phone = u.Phone,
             IsActive = u.IsActive
-        }).ToListAsync(cancellationToken);
+        }).ToListAsync(cancellationToken);  
 
         return Result.Ok(new GetUserListResponse
         {
