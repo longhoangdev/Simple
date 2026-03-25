@@ -102,14 +102,10 @@ ScaffoldingReadMe.txt
 # Docker
 .env
 
-# IMPORTANT: Sensitive configuration files
-appsettings.Development.json
-appsettings.Production.json
-appsettings.Staging.json
-appsettings.Local.json
-appsettings.*.json
-!appsettings.json
-!appsettings.*.example.json
+# IMPORTANT: Sensitive configuration files - ignore ALL appsettings
+appsettings*.json
+launchSettings.json
+**/launchSettings.json
 
 # Connection strings and secrets
 **/connectionstrings.json
