@@ -1,5 +1,4 @@
-﻿using FluentResults;
-using Microsoft.Extensions.Caching.Memory;
+﻿using Microsoft.Extensions.Caching.Memory;
 
 namespace SimpleApp.Shared.Caching;
 

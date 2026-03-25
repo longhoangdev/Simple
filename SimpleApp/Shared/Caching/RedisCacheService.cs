@@ -6,7 +6,7 @@ namespace SimpleApp.Shared.Caching;
 
 public class RedisCacheService(IDistributedCache distributedCache) : IRedisCacheService
 {
-    public async Task<Result<T>> GetOrCreateAsync<T>(string key, Func<CancellationToken, Task<Result<T>>> factory, TimeSpan? expiration = null, bool useSlidingExpiration = false,
+    public async Task<T> GetOrCreateAsync<T>(string key, Func<CancellationToken, Task<T>> factory,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(key))
@@ -18,10 +18,7 @@ public class RedisCacheService(IDistributedCache distributedCache) : IRedisCache
         
         var result = await factory(cancellationToken);
         
-        if (!result.IsSuccess) return Result.Fail<T>("Value not found");
-        
-        await distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(result.Value), token: cancellationToken);
-        return result.Value;
-
+        await distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(result), token: cancellationToken);
+        return result;
     }
 }

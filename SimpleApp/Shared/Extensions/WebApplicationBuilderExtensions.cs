@@ -1,4 +1,4 @@
-﻿namespace SimpleApp.Extensions;
+﻿namespace SimpleApp.Shared.Extensions;
 
 public static class WebApplicationBuilderExtensions
 {

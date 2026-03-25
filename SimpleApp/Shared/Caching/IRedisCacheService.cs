@@ -1,13 +1,9 @@
-﻿using FluentResults;
-
-namespace SimpleApp.Shared.Caching;
+﻿namespace SimpleApp.Shared.Caching;
 
 public interface IRedisCacheService
 {
-    Task<Result<T>> GetOrCreateAsync<T>(
+    Task<T> GetOrCreateAsync<T>(
         string key,
-        Func<CancellationToken, Task<Result<T>>> factory,
-        TimeSpan? expiration = null,
-        bool useSlidingExpiration = false,
+        Func<CancellationToken, Task<T>> factory,
         CancellationToken cancellationToken = default);
 }

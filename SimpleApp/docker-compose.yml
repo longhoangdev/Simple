@@ -9,6 +9,8 @@
     depends_on:
       postgres:
         condition: service_healthy
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=simple-db;Username=postgres;Password=postgres
   postgres:
     image: postgres:latest
     restart: always
@@ -18,8 +20,13 @@
       - POSTGRES_PASSWORD=postgres
     ports:
       - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready", "-d", "simpleapp-os" ]
+      test: [ "CMD-SHELL", "pg_isready", "-d", "simple-db" ]
       interval: 5s
       timeout: 60s
-      retries: 5    
+      retries: 5
+
+volumes:
+  postgres_data:

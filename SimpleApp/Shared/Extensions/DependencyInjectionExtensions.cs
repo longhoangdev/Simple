@@ -1,8 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SimpleApp.Persistence.Contexts;
-using Microsoft.Extensions.Configuration;
 
-namespace SimpleApp.Extensions;
+namespace SimpleApp.Shared.Extensions;
 
 public static class DependencyInjectionExtensions
 {

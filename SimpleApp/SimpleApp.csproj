@@ -38,6 +38,11 @@
       <PackageReference Include="Microsoft.Owin.Security.Jwt" Version="4.2.2" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
       <PackageReference Include="Scalar.AspNetCore" Version="1.2.50" />
+      <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+      <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
+      <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
+      <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+      <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
       <PackageReference Include="Spectre.Console.Cli" Version="0.48.0" />
     </ItemGroup>
 

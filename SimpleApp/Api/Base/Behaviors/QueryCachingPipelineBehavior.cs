@@ -5,7 +5,7 @@ using SimpleApp.Shared.Messaging;
 
 namespace SimpleApp.Api.Base.Behaviors;
 
-public class QueryCachingPipelineBehavior<TRequest, TResponse>(ICacheService cacheService) : IPipelineBehavior<TRequest, TResponse>
+public class QueryCachingPipelineBehavior<TRequest, TResponse>(IRedisCacheService cacheService) : IPipelineBehavior<TRequest, TResponse>
     where TRequest : ICachedQuery
 {
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
@@ -13,8 +13,6 @@ public class QueryCachingPipelineBehavior<TRequest, TResponse>(ICacheService cac
         return await cacheService.GetOrCreateAsync(
             request.CacheKey,
             _ => next(),
-            request.Expiration,
-            useSlidingExpiration: true,
             cancellationToken);
     }
 }

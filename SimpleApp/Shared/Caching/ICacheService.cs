@@ -1,6 +1,4 @@
-﻿using FluentResults;
-
-namespace SimpleApp.Shared.Caching;
+﻿namespace SimpleApp.Shared.Caching;
 
 public interface ICacheService
 {

@@ -16,10 +16,7 @@ internal static class ResultExtensions
     /// <returns>An HTTP result representing either the success value or a ProblemDetails object with errors.</returns>
     public static IResult ToHttpResult<T>(this Result<T> result)
     {
-        if (result.IsSuccess)
-            return Results.Ok(result.Value);
-
-        return CreateProblemDetailsFromErrors(result.Errors);
+        return result.IsSuccess ? Results.Ok(result.Value) : CreateProblemDetailsFromErrors(result.Errors);
     }
 
     /// <summary>
@@ -58,13 +55,14 @@ internal static class ResultExtensions
             );
 
         var nonValidationErrors = errors.Where(e => e is not ValidationError);
-        var genericErrors = nonValidationErrors
+        var enumerable = nonValidationErrors as IError[] ?? nonValidationErrors.ToArray();
+        var genericErrors = enumerable
             .SelectMany(e => e.Reasons.Select(r => r.Message))
             .Distinct()
             .ToList();
 
-        if (!genericErrors.Any() && nonValidationErrors.Any())
-            genericErrors = nonValidationErrors.Select(x => x.Message).Distinct().ToList();
+        if (!genericErrors.Any() && enumerable.Length != 0)
+            genericErrors = enumerable.Select(x => x.Message).Distinct().ToList();
 
         if (validationErrors.Any())
             problemDetails.Extensions.Add("validationErrors", validationErrors);
