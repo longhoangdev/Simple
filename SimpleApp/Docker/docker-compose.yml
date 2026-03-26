@@ -1,0 +1,108 @@
+﻿services:
+  gateway:
+    image: gateway
+    build:
+      context: ../..
+      dockerfile: SimpleApp/Docker/Dockerfile.Gateway
+    ports:
+      - 8080:8080   # single public entry point
+    depends_on:
+      simpleapp:
+        condition: service_healthy
+      logserver:
+        condition: service_healthy
+    environment:
+      - AzureAdB2C__Instance=https://VeekDemoB2C.b2clogin.com
+      - AzureAdB2C__ClientId=9fc826d2-27ae-49b8-a1ad-8eac2f0b528b
+      - AzureAdB2C__Domain=VeekDemoB2C.onmicrosoft.com
+      - AzureAdB2C__SignUpSignInPolicyId=B2C_1_SignUpSignInLongDemo
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  simpleapp:
+    image: simpleapp
+    build:
+      context: ../..
+      dockerfile: SimpleApp/Docker/Dockerfile
+    expose:
+      - 8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      logserver:
+        condition: service_healthy
+    environment:
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=simple-db;Username=postgres;Password=postgres
+      - RabbitMq__Host=rabbitmq
+      - RabbitMq__VirtualHost=/
+      - RabbitMq__Username=guest
+      - RabbitMq__Password=guest
+      - DataDog__LogsApiUrl=http://logserver:8080/api/logs
+      - DataDog__ApiKey=not-required-for-local-server
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  logserver:
+    image: logserver
+    build:
+      context: ../..
+      dockerfile: SimpleApp/Docker/Dockerfile.LogServer
+    expose:
+      - 8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=simple-log-db;Username=postgres;Password=postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  postgres:
+    image: postgres:latest
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=simple-db
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    restart: always
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  postgres_data:
+  rabbitmq_data:

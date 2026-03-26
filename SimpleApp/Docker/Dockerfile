@@ -6,9 +6,9 @@ EXPOSE 8080
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["SimpleApp.csproj", "SimpleApp/"]
+COPY ["SimpleApp/SimpleApp.csproj", "SimpleApp/"]
 RUN dotnet restore "SimpleApp/SimpleApp.csproj"
-COPY . SimpleApp/
+COPY SimpleApp/ SimpleApp/
 WORKDIR "/src/SimpleApp"
 RUN dotnet build "SimpleApp.csproj" -c $BUILD_CONFIGURATION -o /app/build
 

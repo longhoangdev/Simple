@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using MassTransit;
+using Microsoft.EntityFrameworkCore;
 using SimpleApp.Domain.Entities.Users;
 using SimpleApp.Domain.Interfaces;
 
@@ -9,14 +10,19 @@ public sealed class DataContext : DbContext
     public DataContext(DbContextOptions<DataContext> options) : base(options)
     {
     }
-    
+
     public DbSet<User> Users => Set<User>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.ApplyConfigurationsFromAssembly(typeof(DataContext).Assembly);
+
+        // MassTransit Transactional Outbox tables
+        builder.AddInboxStateEntity();
+        builder.AddOutboxStateEntity();
+        builder.AddOutboxMessageEntity();
     }
-    
+
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         var softDeleteEntries = ChangeTracker
@@ -30,7 +36,7 @@ public sealed class DataContext : DbContext
         }
         return SaveChangesAsync(true, cancellationToken);
     }
-    
+
     public override int SaveChanges() => throw new NotImplementedException();
     public override int SaveChanges(bool acceptAllChangesOnSuccess) => throw new NotImplementedException();
 }

@@ -1,0 +1,51 @@
+@SimpleApp.LogServer_HostAddress = http://localhost:5180
+
+### Ingest a log entry
+POST {{SimpleApp.LogServer_HostAddress}}/api/logs
+Content-Type: application/json
+
+{
+  "message": "Welcome email stub: sending welcome to test@example.com",
+  "level": "INFO",
+  "service": "simpleapp",
+  "source": "UserEventConsumer",
+  "hostname": "localhost",
+  "tags": "env:development",
+  "attributes": {
+    "userId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "email": "test@example.com",
+    "event": "UserCreated"
+  }
+}
+
+###
+
+### Query all logs
+GET {{SimpleApp.LogServer_HostAddress}}/api/logs
+Accept: application/json
+
+###
+
+### Query logs by level
+GET {{SimpleApp.LogServer_HostAddress}}/api/logs?level=INFO&page=1&pageSize=20
+Accept: application/json
+
+###
+
+### Query logs by service
+GET {{SimpleApp.LogServer_HostAddress}}/api/logs?service=simpleapp
+Accept: application/json
+
+###
+
+### Query logs by date range
+GET {{SimpleApp.LogServer_HostAddress}}/api/logs?from=2026-01-01T00:00:00Z&to=2026-12-31T23:59:59Z
+Accept: application/json
+
+###
+
+### Get log stats
+GET {{SimpleApp.LogServer_HostAddress}}/api/logs/stats
+Accept: application/json
+
+###

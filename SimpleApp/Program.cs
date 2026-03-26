@@ -32,6 +32,8 @@ try
     builder.MemoryCache();
     builder.Services.AddOpenApi();
     builder.Services.AddDatabase(builder.Configuration);
+    builder.Services.AddMessaging(builder.Configuration);
+    builder.Services.AddDataDogLogging(builder.Configuration);
 
     builder.Services.AddEndpoints();
 
@@ -43,6 +45,9 @@ try
     }
 
     app.UseSerilogRequestLogging();
+
+    app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "simpleapp" }))
+        .AllowAnonymous();
 
     app.MapEndpoints();
 

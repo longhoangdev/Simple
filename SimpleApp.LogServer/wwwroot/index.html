@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SimpleApp Log Server</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #1a1d27;
+      border-bottom: 1px solid #2d3148;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 { font-size: 1.2rem; font-weight: 600; color: #a78bfa; }
+    header span { font-size: 0.8rem; color: #64748b; }
+
+    /* ── Layout ── */
+    .container { padding: 24px; max-width: 1400px; margin: 0 auto; }
+
+    /* ── Stats bar ── */
+    .stats { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+    .stat-card {
+      background: #1a1d27;
+      border: 1px solid #2d3148;
+      border-radius: 8px;
+      padding: 16px 24px;
+      min-width: 140px;
+      flex: 1;
+    }
+    .stat-card .label { font-size: 0.75rem; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+    .stat-card .value { font-size: 1.6rem; font-weight: 700; }
+    .stat-card.total  .value { color: #a78bfa; }
+    .stat-card.info   .value { color: #38bdf8; }
+    .stat-card.warn   .value { color: #fbbf24; }
+    .stat-card.error  .value { color: #f87171; }
+
+    /* ── Filters ── */
+    .filters {
+      background: #1a1d27;
+      border: 1px solid #2d3148;
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      align-items: flex-end;
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+    .filter-group label { font-size: 0.75rem; color: #64748b; }
+    .filter-group input, .filter-group select {
+      background: #0f1117;
+      border: 1px solid #2d3148;
+      border-radius: 6px;
+      color: #e2e8f0;
+      padding: 8px 12px;
+      font-size: 0.875rem;
+      outline: none;
+    }
+    .filter-group input:focus, .filter-group select:focus { border-color: #a78bfa; }
+    .filter-group select option { background: #1a1d27; }
+
+    .btn {
+      padding: 8px 20px;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-primary { background: #a78bfa; color: #0f1117; }
+    .btn-ghost   { background: transparent; border: 1px solid #2d3148; color: #94a3b8; }
+
+    /* ── Table ── */
+    .table-wrap {
+      background: #1a1d27;
+      border: 1px solid #2d3148;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .table-header {
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #2d3148;
+    }
+    .table-header span { font-size: 0.875rem; color: #64748b; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    thead th {
+      padding: 10px 16px;
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      border-bottom: 1px solid #2d3148;
+    }
+    tbody tr { border-bottom: 1px solid #1e2236; transition: background .1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #20243a; cursor: pointer; }
+    tbody td { padding: 10px 16px; vertical-align: top; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ── Level badges ── */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .badge-INFO  { background: #0c3a54; color: #38bdf8; }
+    .badge-WARN  { background: #3b2c10; color: #fbbf24; }
+    .badge-ERROR { background: #3b1010; color: #f87171; }
+    .badge-DEBUG { background: #1e2a1e; color: #4ade80; }
+
+    /* ── Pagination ── */
+    .pagination { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid #2d3148; align-items: center; }
+    .pagination span { font-size: 0.8rem; color: #64748b; }
+
+    /* ── Detail modal ── */
+    .overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.6);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      background: #1a1d27;
+      border: 1px solid #2d3148;
+      border-radius: 10px;
+      padding: 24px;
+      width: 90%;
+      max-width: 700px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal h2 { font-size: 1rem; font-weight: 600; margin-bottom: 16px; color: #a78bfa; }
+    .modal-close { float: right; background: none; border: none; color: #64748b; font-size: 1.2rem; cursor: pointer; }
+    .detail-row { display: flex; gap: 12px; margin-bottom: 10px; font-size: 0.875rem; }
+    .detail-row .key { color: #64748b; min-width: 120px; }
+    .detail-row .val { color: #e2e8f0; word-break: break-all; }
+    pre {
+      background: #0f1117;
+      border: 1px solid #2d3148;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 0.8rem;
+      overflow-x: auto;
+      color: #4ade80;
+      margin-top: 8px;
+    }
+
+    .loading { text-align: center; padding: 40px; color: #64748b; }
+    .empty   { text-align: center; padding: 40px; color: #64748b; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📋 SimpleApp Log Server</h1>
+  <span id="last-refresh">–</span>
+</header>
+
+<div class="container">
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card total">
+      <div class="label">Total Logs</div>
+      <div class="value" id="stat-total">–</div>
+    </div>
+    <div class="stat-card info">
+      <div class="label">INFO</div>
+      <div class="value" id="stat-info">–</div>
+    </div>
+    <div class="stat-card warn">
+      <div class="label">WARN</div>
+      <div class="value" id="stat-warn">–</div>
+    </div>
+    <div class="stat-card error">
+      <div class="label">ERROR</div>
+      <div class="value" id="stat-error">–</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-group">
+      <label>Service</label>
+      <input type="text" id="f-service" placeholder="e.g. simpleapp" />
+    </div>
+    <div class="filter-group">
+      <label>Level</label>
+      <select id="f-level">
+        <option value="">All</option>
+        <option>INFO</option>
+        <option>WARN</option>
+        <option>ERROR</option>
+        <option>DEBUG</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>From</label>
+      <input type="datetime-local" id="f-from" />
+    </div>
+    <div class="filter-group">
+      <label>To</label>
+      <input type="datetime-local" id="f-to" />
+    </div>
+    <div class="filter-group">
+      <label>Page size</label>
+      <select id="f-size">
+        <option>20</option>
+        <option>50</option>
+        <option>100</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="search()">Search</button>
+    <button class="btn btn-ghost" onclick="reset()">Reset</button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <div class="table-header">
+      <strong>Log Entries</strong>
+      <span id="result-info"></span>
+    </div>
+    <div id="table-body">
+      <div class="loading">Loading…</div>
+    </div>
+    <div class="pagination" id="pagination" style="display:none">
+      <span id="page-info"></span>
+      <button class="btn btn-ghost" id="btn-prev" onclick="changePage(-1)">← Prev</button>
+      <button class="btn btn-ghost" id="btn-next" onclick="changePage(1)">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="overlay" id="overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2>Log Detail</h2>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+  let currentPage = 1;
+  let totalPages  = 1;
+
+  async function fetchStats() {
+    try {
+      const r = await fetch('/api/logs/stats');
+      const d = await r.json();
+      const total = d.byLevel.reduce((s, x) => s + x.count, 0);
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-info').textContent  = d.byLevel.find(x => x.level === 'INFO')?.count  ?? 0;
+      document.getElementById('stat-warn').textContent  = d.byLevel.find(x => x.level === 'WARN')?.count  ?? 0;
+      document.getElementById('stat-error').textContent = d.byLevel.find(x => x.level === 'ERROR')?.count ?? 0;
+    } catch { /* ignore */ }
+  }
+
+  async function fetchLogs(page = 1) {
+    const service  = document.getElementById('f-service').value.trim();
+    const level    = document.getElementById('f-level').value;
+    const from     = document.getElementById('f-from').value;
+    const to       = document.getElementById('f-to').value;
+    const pageSize = document.getElementById('f-size').value;
+
+    const params = new URLSearchParams({ page, pageSize });
+    if (service) params.set('service', service);
+    if (level)   params.set('level', level);
+    if (from)    params.set('from', new Date(from).toISOString());
+    if (to)      params.set('to',   new Date(to).toISOString());
+
+    document.getElementById('table-body').innerHTML = '<div class="loading">Loading…</div>';
+
+    const r = await fetch('/api/logs?' + params);
+    const d = await r.json();
+
+    totalPages = Math.ceil(d.total / pageSize) || 1;
+    currentPage = page;
+
+    document.getElementById('result-info').textContent = `${d.total} result(s)`;
+    document.getElementById('last-refresh').textContent = 'Refreshed ' + new Date().toLocaleTimeString();
+
+    if (d.data.length === 0) {
+      document.getElementById('table-body').innerHTML = '<div class="empty">No logs found.</div>';
+      document.getElementById('pagination').style.display = 'none';
+      return;
+    }
+
+    const rows = d.data.map(log => `
+      <tr onclick="showDetail('${log.id}')">
+        <td style="color:#64748b;font-size:.75rem">${new Date(log.timestamp).toLocaleString()}</td>
+        <td><span class="badge badge-${log.level}">${log.level}</span></td>
+        <td style="color:#a78bfa">${esc(log.service)}</td>
+        <td>${esc(log.message)}</td>
+        <td style="color:#64748b">${esc(log.hostname ?? '–')}</td>
+      </tr>`).join('');
+
+    document.getElementById('table-body').innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Timestamp</th><th>Level</th><th>Service</th><th>Message</th><th>Hostname</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+
+    document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+    document.getElementById('btn-prev').disabled = currentPage <= 1;
+    document.getElementById('btn-next').disabled = currentPage >= totalPages;
+    document.getElementById('pagination').style.display = 'flex';
+  }
+
+  async function showDetail(id) {
+    const r = await fetch('/api/logs/' + id);
+    const log = await r.json();
+    document.getElementById('modal-content').innerHTML = `
+      <div class="detail-row"><span class="key">ID</span>        <span class="val">${esc(log.id)}</span></div>
+      <div class="detail-row"><span class="key">Timestamp</span> <span class="val">${new Date(log.timestamp).toLocaleString()}</span></div>
+      <div class="detail-row"><span class="key">Received At</span><span class="val">${new Date(log.receivedAt).toLocaleString()}</span></div>
+      <div class="detail-row"><span class="key">Level</span>     <span class="val"><span class="badge badge-${log.level}">${log.level}</span></span></div>
+      <div class="detail-row"><span class="key">Service</span>   <span class="val">${esc(log.service)}</span></div>
+      <div class="detail-row"><span class="key">Source</span>    <span class="val">${esc(log.source ?? '–')}</span></div>
+      <div class="detail-row"><span class="key">Hostname</span>  <span class="val">${esc(log.hostname ?? '–')}</span></div>
+      <div class="detail-row"><span class="key">Tags</span>      <span class="val">${esc(log.tags ?? '–')}</span></div>
+      <div class="detail-row"><span class="key">Message</span>   <span class="val">${esc(log.message)}</span></div>
+      ${log.attributes ? `<div class="detail-row"><span class="key">Attributes</span></div><pre>${esc(JSON.stringify(log.attributes, null, 2))}</pre>` : ''}
+    `;
+    document.getElementById('overlay').classList.add('open');
+  }
+
+  function closeModal(e) {
+    if (!e || e.target === document.getElementById('overlay'))
+      document.getElementById('overlay').classList.remove('open');
+  }
+
+  function search() { fetchLogs(1); fetchStats(); }
+  function reset() {
+    ['f-service','f-from','f-to'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-level').value = '';
+    document.getElementById('f-size').value = '20';
+    fetchLogs(1);
+  }
+  function changePage(dir) { fetchLogs(currentPage + dir); }
+  function esc(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // Initial load + auto-refresh every 30s
+  fetchStats();
+  fetchLogs(1);
+  setInterval(() => { fetchStats(); fetchLogs(currentPage); }, 30000);
+</script>
+</body>
+</html>

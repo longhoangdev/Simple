@@ -54,7 +54,6 @@ internal static class ProgramExtensions
                     }
 
                     var context = ctx.HttpContext.RequestServices.GetRequiredService<ReadOnlyDataContext>();
-                    var appUser = await context.Users.FirstOrDefaultAsync(u => u.Id == new Guid(userId));
 
                     var claims = new List<Claim>
                     {
